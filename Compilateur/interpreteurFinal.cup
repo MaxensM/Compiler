@@ -1,0 +1,638 @@
+import java_cup.runtime.*;
+import java.util.*;
+import java.io.*;
+
+parser code {:
+  public static void main(String args[]) throws Exception {
+    new parser(new Yylex(System.in)).parse();
+  }
+
+
+	public void syntax_error(Symbol cur_token) {
+		// n'interrompt pas la compil...
+		// on est par defaut dans l'etat error qui permet ensuite la recup
+		// par défaut : report_error("syntax error", null);
+		report_error("Syntaxe incorrecte <"+tokenToString(cur_token)+">", null);
+	}
+
+	public void report_error(String message, Object info) {
+		// n'interrompt pas la compil
+		if (info == null) System.err.println("Erreur '"+ ptext()+ "' ( ligne "+ pline() + ", colonne " + pcolumn() + " ) : " + message);
+		else System.err.println("Erreur : '"+ptext()+ "' ( ligne "+ pline() + ", colonne " + pcolumn() + " ) : " +message+" : "+info);
+		System.err.println("-> Reprise de l'analyse ");
+	}
+
+	public void unrecovered_syntax_error(Symbol cur_token) {
+    	// par defaut : report_fatal_error("Couldn't repair and continue parse", null);
+		// on n'a pas reussi a faire de la recup
+		report_fatal_error("Recuperation impossible <"+tokenToString(cur_token)+">", null);   // interrompt la compil
+	}
+
+	public void report_fatal_error(String message, Object info) {
+		// qd cette fct est appelee, message vaut par defaut "Couldn't repair and continue parse"
+		String m = "Erreur fatale '"+ ptext()+ "' ( ligne " + pline() + ", colonne " + pcolumn() + " ) : " + message;
+		if (info == null) System.err.println(m);
+		else System.err.println(m+" : "+info);
+		System.err.println("-> Arrêt de l'analyse");
+		done_parsing(); // interrompt la compil
+  	}
+
+	public int pline(){
+		return ((Yylex)getScanner()).getYyLine();
+	}
+	public int pcolumn(){
+		return ((Yylex)getScanner()).getYyColumn();
+	}
+	public String ptext(){
+		return ((Yylex)getScanner()).getYyText();
+	}
+
+
+public String tokenToString (Symbol token) {
+     switch (token.sym) {
+	case sym.PROGRAMME_DOMUS : return "PROGRAMME ";
+	case sym.DECLARATION_APPAREILS : return "DECLARATION APPAREILS ";
+	case sym.DECLARATION_INTERFACES : return "DECLARATION INTERFACES ";
+	case sym.DECLARATION_SCENARII : return "DECLARATION SCENARII ";
+	case sym.DECLARATION_COMMANDES : return "DECLARATION COMMANDES ";
+	case sym.SCENARIO : return "SCENARIO ";
+	case sym.DEFINIR : return "DEFINIR ";
+	case sym.EXECUTER_SCENARIO : return "EXECUTER SCENARIO ";
+	case sym.ASSOCIER : return "ASSOCIER ";
+	case sym.PROGRAMMER : return "PROGRAMMER ";
+	case sym.MESSAGE : return "MESSAGE ";
+	case sym.FAIRE : return "FAIRE ";
+	case sym.FAIT : return "FAIT ";
+	case sym.SI : return "SI ";
+	case sym.ALORS : return "ALORS ";
+	case sym.SINON : return "SINON ";
+	case sym.FSI : return "FSI ";
+	case sym.OUVRIR : return "OUVRIR ";
+	case sym.FERMER : return "FERMER ";
+	case sym.ETEINDRE : return "ETEINDRE ";
+	case sym.ALLUMER : return "ALLUMER ";
+	case sym.TAMISER : return "TAMISER ";
+	case sym.ETAT : return "ETAT ";
+	case sym.ALLUMER_PARTIEL : return "ALLUMER PARTIEL ";
+	case sym.ALLUMER_ECO : return "ALLUMER ECO ";
+	case sym.OUVRIR_PARTIEL : return "OUVRIR PARTIEL ";
+	case sym.FERMER_PARTIEL : return "FERMER PARTIEL ";
+	case sym.ALLUME : return "ALLUME ";
+	case sym.ETEINT : return "ETEINT ";
+	case sym.DEMI : return "DEMI ";
+	case sym.ECO : return "ECO ";
+	case sym.OUVERT : return "OUVERT ";
+	case sym.FERME : return "FERME ";
+	case sym.ECLAIRAGE : return "ECLAIRAGE ";
+	case sym.VOLET : return "VOLET ";
+	case sym.CHAUFFAGE : return "CHAUFFAGE ";
+	case sym.ALARME : return "ALARME ";
+	case sym.FENETRE : return "FENETRE ";
+	case sym.AUTRE_APPAREIL : return "AUTRE_APPAREIL ";
+	case sym.INTERRUPTEUR : return "INTERRUPTEUR ";
+	case sym.MOBILE : return "MOBILE ";
+	case sym.TELEPHONE : return "TELEPHONE ";
+	case sym.TELECOMMANDE : return "TELECOMMANDE ";
+	case sym.TABLETTE : return "TABLETTE ";
+	case sym.TV : return "TV ";
+	case sym.HIFI : return "HIFI ";
+	case sym.CAFETIERE : return "CAFETIERE ";
+	case sym.VIDEO_PROJ : return "VIDEO_PROJ ";
+	case sym.LAVE_VAISSELLE : return "LAVE_VAISSELLE ";
+	case sym.SECHE_LINGE : return "SECHE_LINGE ";
+	case sym.LAVE_LINGE : return "LAVE_LINGE ";
+	case sym.ORDINATEUR : return "ORDINATEUR ";
+	case sym.PORTAIL : return "PORTAIL ";
+	case sym.INFERIEUR_SLASH : return "INFERIEUR_SLASH ";
+	case sym.INFERIEUR : return "INFERIEUR ";
+	case sym.SUPERIEUR : return "SUPERIEUR ";
+	case sym.DOUBLE_SLASH : return "DOUBLE_SLASH ";
+	case sym.VIRGULE : return "VIRGULE ";
+	case sym.POINT : return "POINT ";
+	case sym.PARENTHESE_GAUCHE : return "PARENTHESE_GAUCHE ";
+	case sym.PARENTHESE_DROITE : return "PARENTHESE_DROITE ";
+	case sym.EGAL : return "EGAL ";
+	case sym.DOUBLE_EGAL : return "DOUBLE_EGAL ";
+	case sym.CROCHET_GAUCHE : return "CROCHET_GAUCHE ";
+	case sym.CROCHET_DROITE : return "CROCHET_DROITE ";
+	case sym.DEUX_POINTS : return "DEUX_POINTS ";
+	case sym.POINT_VIRGULE : return "POINT_VIRGULE ";
+	case sym.UNDERSCORE : return "UNDERSCORE ";
+	case sym.EOL : return "EOL ";
+	case sym.IDENTIFIANT : return "IDENTIFIANT ";
+	case sym.CHAINE : return "CHAINE ";
+	case sym.CONTENU_MESSAGE : return "CONTENU_MESSAGE ";
+	case sym.ENTIER : return "ENTIER ";
+	default : return "Token imprévu ou error";
+	}
+}
+
+:}
+
+action code {:
+
+public class ProductionCode {
+  private String cMaisonUser;
+  private String habitatSpecific;
+  private int numScenario = 0;
+  public String chaineScenario = "";
+  public String chaineStringFinal = "";
+  public String chaineMessage = "";
+  public boolean enBoucle = false;
+  public String associations = "";
+  public int nbInterfaces = 0;
+  public int nbAppareils = 0;
+  public String scenarios = "";
+  public String scenariosProgrammes="";
+
+
+  public ProductionCode() {
+    cMaisonUser = "public class CMaisonUser extends CMaison {\n\n\t"+"public CMaisonUser() {\n\t"+"super();";
+
+    habitatSpecific = "import java.util.ArrayList;\n\n"
+    +"public class HabitatSpecific extends Habitat {\n\n\t"
+    +"public HabitatSpecific(ArrayList<CAppareil> lapp, ArrayList<CEnsAppareil> lens, ArrayList<CScenario> lscen, ArrayList<CInterface> lint, ArrayList<CProgrammation> lprog)\n\t\t"
+    +"{\n\t\t\t"
+    +"super(lapp,lens,lscen,lint,lprog);\n\t\t"
+    +"}\n\n"
+    + "public void execScenarioNum(int num)"
+    + "{"
+    + "System.out.println(\"Execution du scenario\" + this.l_scenarios.get(num).getNomScenario()+ \"...\");"
+    + "\n\n";
+  }
+
+  public String getCMaisonUser(){
+    return cMaisonUser;
+  }
+
+  public String getHabitatSpecific(){
+    return habitatSpecific;
+  }
+
+  public void debutDeclarationsAppareils() {
+    this.cMaisonUser +="\n\n\t\t//Declarations d'appareils";
+  }
+  public void declaration(String jType, String name, String type) {
+  	this.cMaisonUser +="\n\t\t"+ jType + " " + name + " = " + "new " + jType + "(\"" + name + "\", TypeAppareil." + type + ");";
+  	this.cMaisonUser += "\n\t\tma_liste_appareils.add(" + name + ");";
+  	this.nbAppareils++;
+  }
+
+  public void definition(String jType, String nameDef, String nomVar) {
+  	//Si le nomVar est null, on av créer l'instance CEnsAppareil
+  	if(nomVar == null) {
+  		this.cMaisonUser +="\n\t\t"+ jType + " " + nameDef + " = " + "new " + jType + "(\"" + nameDef + "\");";
+  	} else {
+  		//Si ce n'est pas null, on va seulement faire des appaels de méthodes
+  		// à addAppareil()
+  		this.cMaisonUser +="\n\t\t"+ nameDef + ".addAppareil(" + nomVar + ");";
+  	}
+
+  	// On vérifie qu'on peut l'ajouter à la liste
+  	if(ajouterALaListe)
+  		this.cMaisonUser +="\n\t\t"+ "ma_liste_ens_appareils.add(" + nameDef + ");";
+
+  }
+
+  public void ajoutADefinition(String ensName, String varName) {
+    // Pour ajouter à une ensemble un appareil
+  	this.cMaisonUser +="\n\t\t"+ ensName + ".addAppareil(" + varName + ");";
+  }
+
+  public void debutDeclarationInterfaces() {
+    this.cMaisonUser +="\n\n\t\t//Declarations Interfaces";
+  }
+
+  public void declInterface(String jType, String name) {
+    // Instanciation d'une interface et ajout à la liste des interfaces
+  	this.cMaisonUser +="\n\t\t"+ jType + " " + name + " = " + "new " + jType + "(\"" + name + "\", TypeInterface." + typeAction + ");";
+  	this.cMaisonUser += "ma_liste_interfaces.add(" + name + ");";
+    this.nbInterfaces++; // Utile pour l'affichage du résumé
+  }
+
+  public void debutCommandes() {
+    this.cMaisonUser +="\n\n\t\t//Commandes";
+  }
+
+  public void association(String nomInterface, String nomScenario){
+    // Ajoute à une autre interface (futurs boutons) un scénario associé
+    cMaisonUser +="\n\t\t" + nomInterface + ".addScenarioAssocie(\"" + nomScenario + "\");";
+    this.associations += nomInterface + " -> " + nomScenario + "\n";
+  }
+
+  public void programmer(String jType, String nameProg) {
+    // Si une progrmammation existe déjà dans la liste locale
+    // pas besoin d'avoir deux fois la même instancation de programmation
+    if (!(listeProgrammations.contains("prog_" + nameProg))) {
+    // Instanciation d'une programmation et ajout à la liste des programmations
+  	  this.cMaisonUser +="\n\t\t"+ jType + " prog_" + nameProg + " = new " + jType + "(\"" + nameProg + "\");";
+  	  listeProgrammations.add("prog_" + nameProg); // On l'ajoute à la liste locale
+  	  prod.ajouterProgALaListe(nameProg); // Puis appel de méthode pour l'ajouter à la liste de programmations
+  	  scenariosProgrammes+= nameProg + ",";
+  	}
+  }
+
+  public void ajouterDate(String nameVarProg, Integer annee, Integer mois, Integer jour, Integer heure, Integer min) {
+    // On ajoute une date à une programmation
+  	this.cMaisonUser +="\n\t\tprog_" + nameVarProg + ".addDate(new CDate(" + annee + "," + mois + "," + jour + "," + heure + "," + min +"));";
+  }
+
+  public void ajouterProgALaListe(String nameVarProg) {
+  	  this.cMaisonUser +="\n\t\tma_liste_programmations" + ".add(prog_" + nameVarProg + ");";
+  }
+
+  public void debutScenarios() {
+    // Code de base pour la création de scénarios
+    this.cMaisonUser +="\n\n\t\t//Scenarios";
+    this.habitatSpecific +="\n\n\t\tswitch(num) {";
+    numScenario = 0;
+  }
+
+
+  public void creerScenario(String nomScenario) {
+    // Pour créer le début d'un scénario
+    // Création pour chaque scénario d'une variable étant égale
+    // au contenu du scénario
+    // (ici pour des raisons de temps, nous avons préféré ne pas faire cela et seulement mettre une chaîne vide)
+    this.cMaisonUser +="\n\n\t\tString " + nomScenario + "_contenu = ";
+  	this.chaineScenario = "\n";
+  	this.habitatSpecific +="\n\n\t\t\tcase " + numScenario + ":";
+  	this.scenarios += nomScenario + ","; // Utile pour le résumé des scénarios
+  	numScenario++;
+  }
+
+  public void terminerScenario(String nomScenario) {
+    // On concatène les chaînes avec celles ci-dessous
+    // On instancie d'abord un CScenario avec le bon nom et le nom de la variable
+    this.cMaisonUser += "\"\";";
+    this.cMaisonUser += "\n\t\tCScenario "+ nomScenario + " = new CScenario(\""+ nomScenario + "\"," + nomScenario + "_contenu);";
+    this.cMaisonUser += "\n\t\tma_liste_scenarios.add(" + nomScenario + ");";
+
+    // On concatène le code du scénario avec celui de l'HabitatSpecific
+    this.habitatSpecific += this.chaineScenario;
+    this.habitatSpecific += "\n\t\t\tbreak;";
+  }
+
+  public void ajouterAppelMeth(String nameVar, String action) {
+    // Cette méthode permet d'appliquer une action spécifique à un appareil
+    // Si on est dans une boucle pas besoin de refaire le for, if, etc
+    if (enBoucle){
+      this.chaineScenario += "\t\t\tappareil"+numBoucle+".appliquer(TypeActionAppareil." + action + ");\n";
+    }
+    else{
+        // On est en présence d'un appel de méthode isolé (en dehors d'une boucle)
+      	this.chaineScenario += "\tfor(CAppareil appareil"+numBoucle+" : this.l_appareils) \n";
+      	this.chaineScenario += "\t\tif(appareil"+numBoucle+".getNomAppareil().equals(\"" + nameVar + "\"))\n";
+      	this.chaineScenario += "\t\t\tappareil"+numBoucle+".appliquer(TypeActionAppareil." + action + ");\n";
+  	}
+  }
+
+  public void ajouterBoucle1(String type) {
+    this.enBoucle = true;
+  	this.chaineScenario += "\tfor(CAppareil appareil"+numBoucle+" : this.l_appareils) \n";
+  	this.chaineScenario += "\t\tif(appareil"+numBoucle+".getTypeAppareil().equals(TypeAppareil." + type + "))\n";
+  }
+
+  public void ajouterBoucle2(String nomAutreAppareil) {
+    this.enBoucle = true;
+	this.chaineScenario += "\tfor(CAppareil appareil"+numBoucle+" : this.l_appareils) \n";
+  	this.chaineScenario += "\t\tif(appareil"+numBoucle+".estTypeAutreAppareil())\n";
+  	this.chaineScenario += "\t\t\tif(appareil"+numBoucle+".getTypeAppareil().equals(TypeAppareil." + nomAutreAppareil + "))\n";
+  }
+
+  public void ajouterBoucle3() {
+    this.enBoucle = true;
+	this.chaineScenario += "\tfor(CAppareil appareil"+numBoucle+" : this.l_appareils) \n";
+  	this.chaineScenario += "\t\tif(appareil"+numBoucle+".estTypeAutreAppareil())\n";
+  }
+
+  public void ajouterBoucle4(String nomEnsemble) {
+    this.enBoucle = true;
+	this.chaineScenario += "\tfor(CEnsAppareil ensemble : this.l_ensembles) \n";
+	this.chaineScenario += "\t\tif(ensemble.getNomEnsAppareil().equals(\"" + nomEnsemble + "\"))\n";
+	this.chaineScenario += "\t\t\tfor(CAppareil appareil"+numBoucle+" : ensemble.getLAppareils()) \n";
+  }
+
+  public void finBoucle(){
+    this.enBoucle = false;
+  }
+
+  public void debutMessage(){
+    this.chaineMessage = "System.out.println(";
+  }
+
+  public void ajouterMessage(String contenu){
+
+    this.chaineMessage += contenu;
+  }
+
+  public void conditionSi(String nomVar, String etat) {
+    // Pour ajouter le corps générique d'une condition
+  	this.chaineScenario += "\tfor(CAppareil appareil"+numBoucle+" : this.l_appareils) \n";
+  	this.chaineScenario += "\t\tif(appareil"+numBoucle+".getNomAppareil().equals(\"" + nomVar + "\"))\n";
+  	this.chaineScenario += "\t\t\tif(appareil"+numBoucle+".getEtatAppareil() == TypeEtatAppareil." + etat + "){\n";
+  	numBoucle++;
+  }
+
+  public void conditionSinon() {
+    numBoucle++;
+  	this.chaineScenario += "\telse{ \n";
+  }
+
+  public void finCondition() {
+    this.chaineScenario += "}\n";
+  }
+
+  public void decrementerCondition(){
+    numBoucle--;
+  }
+
+  public void finMessage() {
+    // Si on est dans une condition on va ajouter une ligne de for suivi d'un if
+    // pour faire la bonne action
+    if (enCondition){
+      this.chaineScenario += "\tfor(CAppareil appareil"+numBoucle+" : this.l_appareils) \n";
+  	  this.chaineScenario += "\t\tif(appareil"+numBoucle+".getNomAppareil().equals(\"" + nomVarGlobale + "\"))\n";
+  	}
+        this.chaineScenario +="\t\t\t\t" + chaineMessage + "\n";
+  }
+
+  public void execScenario(String nomScen) {
+    int numScen = listeScen.indexOf(nomScen);
+    this.chaineScenario += "\tthis.execScenarioNum(" + numScen + ");\n";
+  }
+
+  public void endProgrammes() {
+    // Chaîne de fin déjà préparée pour terminer le fichier CMaisonUser.java
+    cMaisonUser +="\n\n\t\t//Zone de fin\n\t\tmonHabitat = new HabitatSpecific(ma_liste_appareils,ma_liste_ens_appareils, ma_liste_scenarios,ma_liste_interfaces, ma_liste_programmations);\n\t"
+    +"}\n"
+    +"}";
+    // Chaîne de fin déjà préparée pour terminer le fichier HabitatSpecific.java
+    habitatSpecific +="\t\t\tdefault:\n\t\t"
+    +"}\n\t"
+    +"}\n"
+    +"}";
+  }
+
+  public void resumeProgramme(){
+      System.out.println("Nombre d'appareils déclarés : " + nbAppareils);
+      System.out.println("Nombre d'interfaces déclarées : " + nbInterfaces);
+      System.out.print("Nombre de scénarios déclarés : " + numScenario + " {" + scenarios.substring(0,scenarios.length()-1) + "}\n");
+      System.out.println("Scénarios programmés : " + " {" + scenariosProgrammes.substring(0,scenariosProgrammes.length()-1) + "}");
+      System.out.println("Associations Interfaces/Scénariis: \n"+ associations);
+  }
+}
+
+
+public class Ecriture {
+	private BufferedWriter writerCMaisonJava;
+	private BufferedWriter writerHabitatSpecific;
+
+	public Ecriture() {
+	  try {
+			writerCMaisonJava = new BufferedWriter(new FileWriter("CMaisonUser.java"));
+			writerHabitatSpecific = new BufferedWriter(new FileWriter("HabitatSpecific.java"));
+	  } catch(IOException e){
+    	e.printStackTrace();
+    }
+	}
+
+	public void ecritureProgrammes(ProductionCode p) throws IOException {
+		// On concatène la fin du programme
+		p.endProgrammes();
+
+		// Écriture finale
+		writerCMaisonJava.write(p.getCMaisonUser());
+		writerHabitatSpecific.write(p.getHabitatSpecific());
+
+        // Fermeture des fichiers
+		writerCMaisonJava.close();
+		writerHabitatSpecific.close();
+	}
+
+}
+
+ProductionCode prod = new ProductionCode();
+Ecriture ec = new Ecriture();
+
+
+String typeJava, typeAction, nomVariable, nomVariableDef, nomVariableProg, identifiantAssociation = "";
+boolean ajouterALaListe = false;
+Integer valeurDate, annee, mois, jour, heure, min;
+String type_appareil, autre_type_appareil, type_interface, action_appareil;
+boolean callMeth = true;
+String nomEnsembleCourant = "";
+String etat_appareil = "";
+boolean enCondition = false;
+int numBoucle = 0;
+String nomVarGlobale = "";
+
+ArrayList<String> listeScen = new ArrayList<String>();
+ArrayList<String> listeProgrammations = new ArrayList<String>();
+:}
+
+//        == DECLARATIONS ==
+
+// * Structure *
+terminal PROGRAMME_DOMUS,DECLARATION_APPAREILS,DECLARATION_INTERFACES,DECLARATION_SCENARII,DECLARATION_COMMANDES,SCENARIO;
+// * Commandes *
+terminal DEFINIR,EXECUTER_SCENARIO,ASSOCIER,PROGRAMMER,MESSAGE,POURTOUT,FAIRE,FAIT,SI,ALORS,SINON,FSI;
+// * Actions/Etats *
+terminal OUVRIR,FERMER,ETEINDRE,ALLUMER,TAMISER,ETAT,ALLUMER_PARTIEL,ALLUMER_ECO,OUVRIR_PARTIEL,FERMER_PARTIEL,ALLUME,ETEINT,DEMI,ECO,OUVERT,FERME, PRINT;
+// * Appareils *
+terminal ECLAIRAGE,VOLET,CHAUFFAGE,ALARME,FENETRE,AUTRE_APPAREIL,INTERRUPTEUR,MOBILE,TELEPHONE,TELECOMMANDE,TABLETTE,TV,HIFI,CAFETIERE,VIDEO_PROJ,LAVE_VAISSELLE,SECHE_LINGE,LAVE_LINGE,ORDINATEUR,PORTAIL;
+// * Syntaxe *
+terminal INFERIEUR_SLASH,INFERIEUR,SUPERIEUR,DOUBLE_SLASH,VIRGULE,POINT,PARENTHESE_GAUCHE,PARENTHESE_DROITE,EGAL,DOUBLE_EGAL,CROCHET_GAUCHE,CROCHET_DROITE,DEUX_POINTS,POINT_VIRGULE,UNDERSCORE,EOL;
+// * Typés *
+terminal String IDENTIFIANT, CHAINE, CONTENU_MESSAGE;
+terminal Integer ENTIER;
+
+// * Non terminaux *
+non terminal prog, bloc_programme, bloc_appareils, bloc_interfaces, bloc_scenarii, bloc_commandes, bloc_scenario, decl_interfaces, type_interface, decl_appareils,
+creation_appareils, definition_appareils, instr_appareils, type_appareil, list_identifiants, instr_scenario, appel_methode, action_appareil, code_instr, boucle,
+condition, comparateur, compare, contenu_message, instr_commandes, associer, programmer, associer_simple, associer_plusieurs, date_format,
+programmer_simple, programmer_plusieurs, list_date_format, autre_type_appareil, executer_scenario, etat,fin_creation_appareil, list_instr_condition, fin_condition,
+scenario, associations;
+non terminal Integer valeur_date;
+
+//        == STRUCTURE GENERALE ==
+
+prog ::= INFERIEUR PROGRAMME_DOMUS SUPERIEUR  bloc_programme INFERIEUR_SLASH PROGRAMME_DOMUS SUPERIEUR {: ec.ecritureProgrammes(prod); prod.resumeProgramme(); :} ;
+
+bloc_programme ::=  INFERIEUR DECLARATION_APPAREILS SUPERIEUR {: prod.debutDeclarationsAppareils(); :} bloc_appareils INFERIEUR_SLASH DECLARATION_APPAREILS SUPERIEUR
+										INFERIEUR DECLARATION_INTERFACES SUPERIEUR {: prod.debutDeclarationInterfaces(); :} bloc_interfaces INFERIEUR_SLASH DECLARATION_INTERFACES SUPERIEUR
+										INFERIEUR DECLARATION_SCENARII SUPERIEUR {: prod.debutScenarios(); :} bloc_scenarii INFERIEUR_SLASH DECLARATION_SCENARII SUPERIEUR
+										INFERIEUR DECLARATION_COMMANDES SUPERIEUR {: prod.debutCommandes(); :} bloc_commandes INFERIEUR_SLASH DECLARATION_COMMANDES SUPERIEUR;
+
+//        == TYPES/ETATS/ACTIONS ==
+
+type_appareil ::= ECLAIRAGE {: typeJava = "CEclairage"; type_appareil = "ECLAIRAGE"; :}
+								| VOLET {: typeJava = "CVoletFenetre"; type_appareil = "VOLET"; :}
+								| CHAUFFAGE {: typeJava = "CChauffage"; type_appareil = "CHAUFFAGE"; :}
+								| ALARME {: typeJava = "CAlarme"; type_appareil = "ALARME"; :}
+								| FENETRE {: typeJava = "CVoletFenetre"; type_appareil = "FENETRE"; :};
+
+autre_type_appareil ::= HIFI {: typeJava = "CAutreAppareil"; autre_type_appareil = "AUTRE_APPAREIL_HIFI"; :}
+                      | CAFETIERE {: typeJava = "CAutreAppareil"; autre_type_appareil = "AUTRE_APPAREIL_CAFE"; :}
+                      | TV {: typeJava = "CAutreAppareil"; autre_type_appareil = "AUTRE_APPAREIL_TV"; :}
+                      | VIDEO_PROJ {: typeJava = "CAutreAppareil"; autre_type_appareil = "AUTRE_APPAREIL_VP"; :}
+                      | LAVE_VAISSELLE {: typeJava = "CAutreAppareil"; autre_type_appareil = "AUTRE_APPAREIL_LV"; :}
+                      | LAVE_LINGE {: typeJava = "CAutreAppareil"; autre_type_appareil = "AUTRE_APPAREIL_LL"; :}
+                      | SECHE_LINGE {: typeJava = "CAutreAppareil"; autre_type_appareil = "AUTRE_APPAREIL_SL"; :}
+                      | ORDINATEUR {: typeJava = "CAutreAppareil"; autre_type_appareil = "AUTRE_APPAREIL_ORDINATEUR"; :}
+                      | PORTAIL {: typeJava = "CAutreAppareil"; autre_type_appareil = "AUTRE_APPAREIL_PORTAIL"; :};
+
+type_interface ::= INTERRUPTEUR {: typeJava = "CInterface"; typeAction = "INTERRUPTEUR"; :}
+								|  MOBILE {: typeJava = "CInterface"; typeAction = "MOBILE"; :}
+								| TELEPHONE {: typeJava = "CInterface"; typeAction = "TELEPHONE"; :}
+								| TELECOMMANDE {: typeJava = "CInterface"; typeAction = "TELECOMMANDE"; :}
+								| TABLETTE {: typeJava = "CInterface"; typeAction = "TABLETTE"; :}
+								| ORDINATEUR {: typeJava = "CInterface"; typeAction = "ORDINATEUR"; :};
+
+action_appareil ::= OUVRIR {:  action_appareil = "OUVRIR"; :}
+					 | FERMER {: action_appareil = "FERMER"; :}
+					 | ETEINDRE {: action_appareil = "ETEINDRE"; :}
+					 | ALLUMER {: action_appareil = "ALLUMER"; :}
+					 | TAMISER {:  action_appareil = "TAMISER"; :}
+					 | ALLUMER_PARTIEL {: action_appareil = "ALLUMER_PARTIEL"; :}
+					 | ALLUMER_ECO {: action_appareil = "ALLUMER_ECO"; :}
+					 | OUVRIR_PARTIEL {: action_appareil = "OUVRIR_PARTIEL"; :}
+					 | FERMER_PARTIEL {: action_appareil = "FERMER_PARTIEL"; :};
+
+etat ::= ALLUME {:  etat_appareil = "ALLUME"; :}
+       | ETEINT {:  etat_appareil = "ETEINT"; :}
+       | DEMI {:  etat_appareil = "DEMI"; :}
+       | ECO {:  etat_appareil = "ECO"; :}
+       | OUVERT {:  etat_appareil = "OUVERT"; :}
+       | FERME {:  etat_appareil = "FERME"; :};
+
+//        == BLOCS DECLARATION APPAREIL ==
+
+bloc_appareils ::= instr_appareils
+									| instr_appareils bloc_appareils;
+
+instr_appareils ::= decl_appareils
+									| creation_appareils
+									| definition_appareils
+									| error;
+
+decl_appareils ::= type_appareil decl_appareils
+								| IDENTIFIANT:nomVar {: nomVariable = nomVar; prod.declaration(typeJava, nomVariable, type_appareil); :} POINT
+								| IDENTIFIANT:nomVar {: nomVariable = nomVar; prod.declaration(typeJava, nomVariable, type_appareil); :} VIRGULE decl_appareils;
+
+creation_appareils ::= AUTRE_APPAREIL PARENTHESE_GAUCHE autre_type_appareil PARENTHESE_DROITE IDENTIFIANT:nomVar fin_creation_appareil
+										{:
+											nomVariable = nomVar; prod.declaration(typeJava, nomVar, autre_type_appareil);
+
+										:};
+
+fin_creation_appareil ::= POINT
+                        | VIRGULE IDENTIFIANT:nomVar fin_creation_appareil {: 	nomVariable = nomVar; prod.declaration(typeJava, nomVar, autre_type_appareil); :};
+
+definition_appareils ::= DEFINIR IDENTIFIANT:nomVar {: typeJava = "CEnsAppareil"; nomVariableDef = nomVar; prod.definition(typeJava, nomVariableDef, null); :} EGAL CROCHET_GAUCHE list_identifiants CROCHET_DROITE POINT;
+
+list_identifiants ::= IDENTIFIANT:nomVar {: nomVariable = nomVar; prod.definition(typeJava, nomVariableDef, nomVariable); :}  VIRGULE list_identifiants
+										| IDENTIFIANT:nomVar {: ajouterALaListe = true; nomVariable = nomVar; prod.definition(typeJava, nomVariableDef, nomVariable); ajouterALaListe = false; :} ;
+
+//        == BLOCS DECLARATION INTERFACES ==
+
+bloc_interfaces ::= decl_interfaces
+									| decl_interfaces bloc_interfaces;
+
+
+decl_interfaces ::= IDENTIFIANT:nomVar {: nomVariable = nomVar; prod.declInterface(typeJava, nomVariable); :} POINT
+									| IDENTIFIANT:nomVar {: nomVariable = nomVar; prod.declInterface(typeJava, nomVariable); :} VIRGULE decl_interfaces
+									| type_interface decl_interfaces
+									| error;
+
+
+
+//        == BLOCS DECLARATION SCENARII ==
+
+bloc_scenarii ::= bloc_scenario
+                | bloc_scenario bloc_scenarii;
+
+bloc_scenario ::= INFERIEUR SCENARIO IDENTIFIANT:nomScenario {: prod.creerScenario(nomScenario); listeScen.add(nomScenario); :} SUPERIEUR scenario INFERIEUR_SLASH SCENARIO IDENTIFIANT SUPERIEUR {: prod.terminerScenario(nomScenario); :}
+                | error;
+
+scenario ::= instr_scenario
+								| instr_scenario scenario;
+
+instr_scenario ::= appel_methode
+								 | code_instr
+								 | executer_scenario
+								 | error;
+
+executer_scenario ::= EXECUTER_SCENARIO IDENTIFIANT:nomScenario {: prod.execScenario(nomScenario); :} POINT_VIRGULE;
+
+// *Gestion des instructions et messages*
+appel_methode ::= IDENTIFIANT:nomVar POINT action_appareil {: prod.ajouterAppelMeth(nomVar, action_appareil); :} POINT_VIRGULE
+								| MESSAGE PARENTHESE_GAUCHE {: prod.debutMessage(); :} contenu_message {: prod.finMessage(); :} PARENTHESE_DROITE POINT_VIRGULE;
+
+contenu_message ::= CONTENU_MESSAGE:valeurMessage VIRGULE {: prod.ajouterMessage(valeurMessage + " + "); :} contenu_message
+                  | IDENTIFIANT:nomVar VIRGULE {: nomVarGlobale = nomVar; prod.ajouterMessage("appareil"+numBoucle+".getNomAppareil() + "); :} contenu_message
+                  | IDENTIFIANT:nomVar POINT ETAT:etat VIRGULE {: nomVarGlobale = nomVar; prod.ajouterMessage("appareil"+numBoucle+".getEtatAppareil() + "); :} contenu_message
+                  | CONTENU_MESSAGE:valeurMessage {: prod.ajouterMessage(valeurMessage + ");"); :}
+                  | IDENTIFIANT:nomVar POINT ETAT:etat {: nomVarGlobale = nomVar; prod.ajouterMessage("appareil"+numBoucle+".getEtatAppareil()"+");"); :}
+                  | IDENTIFIANT:nomVar {: nomVarGlobale = nomVar; prod.ajouterMessage("appareil"+numBoucle+".getNomAppareil()" + ");"); :};
+
+// *Gestion des boucles/conditions*
+code_instr ::= boucle {: prod.finBoucle(); :}
+						 | condition;
+
+boucle ::= POURTOUT IDENTIFIANT:nomVar DEUX_POINTS type_appareil FAIRE {: prod.ajouterBoucle1(type_appareil); :} appel_methode FAIT POINT_VIRGULE
+        |  POURTOUT IDENTIFIANT:nomVar DEUX_POINTS AUTRE_APPAREIL PARENTHESE_GAUCHE autre_type_appareil PARENTHESE_DROITE FAIRE {: prod.ajouterBoucle2(autre_type_appareil); :} appel_methode
+        	  FAIT POINT_VIRGULE
+        |  POURTOUT IDENTIFIANT:nomVar DEUX_POINTS AUTRE_APPAREIL FAIRE  {: prod.ajouterBoucle3(); :} appel_methode FAIT POINT_VIRGULE
+        |  POURTOUT IDENTIFIANT DEUX_POINTS IDENTIFIANT:nomEnsemble FAIRE {: nomEnsembleCourant = nomEnsemble; prod.ajouterBoucle4(nomEnsemble); :} appel_methode FAIT POINT_VIRGULE ;
+
+
+condition ::= SI {: enCondition = true; :} PARENTHESE_GAUCHE comparateur DOUBLE_EGAL compare PARENTHESE_DROITE ALORS
+							{: prod.conditionSi(nomVariable, etat_appareil); :}
+							list_instr_condition {: prod.finCondition(); :} fin_condition {: enCondition = false; :};
+
+comparateur ::= IDENTIFIANT:nomVar POINT ETAT {: nomVariable = nomVar; :};
+
+compare ::= etat;
+
+fin_condition ::= FSI POINT_VIRGULE
+                | SINON {: prod.conditionSinon(); :} list_instr_condition {: prod.finCondition(); :} FSI POINT_VIRGULE ;
+
+list_instr_condition ::= instr_scenario
+                      |  instr_scenario list_instr_condition;
+
+
+//        == BLOCS DECLARATION COMMANDES ==
+
+bloc_commandes ::= instr_commandes
+								 | instr_commandes bloc_commandes;
+
+instr_commandes ::= associer
+									| programmer;
+
+associer ::= associer_simple
+					 | associer_plusieurs;
+
+associer_simple ::= ASSOCIER IDENTIFIANT:i1 EGAL IDENTIFIANT:i2 POINT {: prod.association(i1, i2); :} ;
+
+associer_plusieurs ::= ASSOCIER IDENTIFIANT:i1  EGAL CROCHET_GAUCHE {: identifiantAssociation = i1; :} associations CROCHET_DROITE POINT;
+
+associations ::= IDENTIFIANT:i2 {: prod.association(identifiantAssociation, i2); :}
+					  		| IDENTIFIANT:i2 VIRGULE {: prod.association(identifiantAssociation, i2); :} associations ;
+
+programmer ::= PROGRAMMER IDENTIFIANT:nomVar EGAL {: nomVariableProg = nomVar;  typeJava = "CProgrammation"; prod.programmer(typeJava, nomVariableProg); :} programmer_simple POINT
+
+						 | PROGRAMMER IDENTIFIANT:nomVar EGAL {: nomVariableProg = nomVar;  typeJava = "CProgrammation"; prod.programmer(typeJava, nomVariableProg); :} programmer_plusieurs POINT
+						  ;
+
+programmer_simple ::= date_format {: /*prod.ajouterProgALaListe(nomVariableProg);*/ :};
+programmer_plusieurs ::= CROCHET_GAUCHE list_date_format {: /*prod.ajouterProgALaListe(nomVariableProg);*/ :} CROCHET_DROITE;
+
+date_format ::= PARENTHESE_GAUCHE valeur_date:annee VIRGULE valeur_date:mois VIRGULE valeur_date:jour VIRGULE valeur_date:heure VIRGULE valeur_date:min PARENTHESE_DROITE
+								{: prod.ajouterDate(nomVariableProg, annee, mois, jour, heure, min); :};
+
+valeur_date ::= ENTIER:val {: RESULT = val; :}
+							| UNDERSCORE {: RESULT = -1; :};
+
+list_date_format ::= date_format
+									 | date_format VIRGULE list_date_format;

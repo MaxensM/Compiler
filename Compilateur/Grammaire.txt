@@ -1,0 +1,205 @@
+//        == STRUCTURE DU PROGRAMME ==
+
+prog ::= INFERIEUR PROGRAMME_DOMUS SUPERIEUR  bloc_programme INFERIEUR_SLASH PROGRAMME_DOMUS SUPERIEUR
+
+bloc_programme ::=  INFERIEUR DECLARATION_APPAREILS SUPERIEUR bloc_appareils INFERIEUR_SLASH DECLARATION_APPAREILS SUPERIEUR
+										INFERIEUR DECLARATION_INTERFACES SUPERIEUR bloc_interfaces INFERIEUR_SLASH DECLARATION_INTERFACES SUPERIEUR 
+										INFERIEUR DECLARATION_SCENARII SUPERIEUR bloc_scenarii INFERIEUR_SLASH DECLARATION_SCENARII SUPERIEUR
+										INFERIEUR DECLARATION_COMMANDES SUPERIEUR bloc_commandes INFERIEUR_SLASH DECLARATION_COMMANDES SUPERIEUR
+
+//        == TYPES ==
+
+type_appareil ::= ECLAIRAGE
+								| VOLET
+								| CHAUFFAGE
+								| ALARME
+								| FENETRE
+								
+autre_type_appareil ::= HIFI
+                      | CAFETIERE
+                      | TV
+                      | VIDEO_PROJ
+                      | LAVE_VAISSELLE
+                      | LAVE_LINGE
+                      | SECHE_LINGE
+                      | ORDINATEUR
+                      | PORTAIL
+
+type_interface ::= INTERRUPTEUR
+								|  MOBILE
+								| TELEPHONE
+								| TELECOMMANDE
+								| TABLETTE
+								| ORDINATEUR
+
+action_appareil ::=
+					 | FERMER
+					 | ETEINDRE
+					 | ALLUMER
+					 | TAMISER
+					 | ALLUMER_PARTIEL
+					 | ALLUMER_ECO
+					 | OUVRIR_PARTIEL
+					 | FERMER_PARTIEL
+					 
+etat ::= ALLUME 
+       | ETEINT
+       | DEMI
+       | ECO
+       | OUVERT
+       | FERME
+       
+//        == BLOCS DECLARATION APPAREIL ==
+
+bloc_appareils ::= instr_appareils
+									| instr_appareils bloc_appareils
+
+instr_appareils ::= decl_appareils
+									| creation_appareils
+									| definition_appareils
+									| error
+
+decl_appareils ::= type_appareil decl_appareils 
+								| IDENTIFIANT POINT  
+								| IDENTIFIANT VIRGULE decl_appareils
+								
+creation_appareils ::= AUTRE_APPAREIL PARENTHESE_GAUCHE autre_type_appareil PARENTHESE_DROITE IDENTIFIANT fin_creation_appareil 
+
+fin_creation_appareil ::= POINT
+                        | VIRGULE IDENTIFIANT fin_creation_appareil
+
+definition_appareils ::= DEFINIR IDENTIFIANT EGAL CROCHET_GAUCHE list_identifiants CROCHET_DROITE POINT
+
+list_identifiants ::= IDENTIFIANT VIRGULE list_identifiants
+										| IDENTIFIANT
+
+//        == BLOCS DECLARATION INTERFACES ==
+
+bloc_interfaces ::= decl_interfaces 
+									| decl_interfaces bloc_interfaces
+
+									
+decl_interfaces ::= IDENTIFIANT POINT
+									| IDENTIFIANT VIRGULE decl_interfaces
+									| type_interface decl_interfaces
+									| error
+
+//        == BLOCS DECLARATION SCENARII ==
+
+bloc_scenarii ::= bloc_scenario
+                | bloc_scenario bloc_scenarii
+                
+bloc_scenario ::= INFERIEUR SCENARIO IDENTIFIANT SUPERIEUR scenario INFERIEUR_SLASH SCENARIO IDENTIFIANT SUPERIEUR
+                | error
+								
+scenario ::= instr_scenario
+								| instr_scenario scenario
+								
+instr_scenario ::= appel_methode
+								 | code_instr
+								 | executer_scenario
+								 | error
+
+executer_scenario ::= EXECUTER_SCENARIO IDENTIFIANT POINT_VIRGULE;
+
+// *Gestion des instructions et messages*
+appel_methode ::= IDENTIFIANT POINT action_appareil POINT_VIRGULE
+								| MESSAGE PARENTHESE_GAUCHE contenu_message PARENTHESE_DROITE POINT_VIRGULE
+								
+contenu_message ::= CONTENU_MESSAGE VIRGULE contenu_message
+                  | IDENTIFIANT VIRGULE contenu_message
+                  | IDENTIFIANT POINT ETAT VIRGULE contenu_message
+                  | CONTENU_MESSAGE
+                  | IDENTIFIANT POINT ETAT
+                  | IDENTIFIANT
+                  
+// *Gestion des boucles/conditions*                  
+code_instr ::= boucle
+						 | condition
+						 		 	
+boucle ::= POURTOUT IDENTIFIANT DEUX_POINTS type_appareil FAIRE appel_methode FAIT POINT_VIRGULE 
+        |  POURTOUT IDENTIFIANT DEUX_POINTS AUTRE_APPAREIL PARENTHESE_GAUCHE autre_type_appareil PARENTHESE_DROITE FAIRE appel_methode FAIT POINT_VIRGULE 
+        |  POURTOUT IDENTIFIANT DEUX_POINTS AUTRE_APPAREIL FAIRE appel_methode FAIT POINT_VIRGULE 
+        |  POURTOUT IDENTIFIANT DEUX_POINTS IDENTIFIANT FAIRE appel_methode FAIT POINT_VIRGULE
+
+ 
+condition ::= SI PARENTHESE_GAUCHE comparateur DOUBLE_EGAL compare PARENTHESE_DROITE ALORS list_instr_condition fin_condition
+							
+comparateur ::= IDENTIFIANT POINT ETAT 
+
+compare ::= etat
+
+fin_condition ::= FSI POINT_VIRGULE
+                | SINON list_instr_condition FSI POINT_VIRGULE 
+
+list_instr_condition ::= instr_scenario
+                      |  instr_scenario list_instr_condition
+
+//        == BLOCS DECLARATION COMMANDES ==
+
+bloc_commandes ::= instr_commandes
+								 | instr_commandes bloc_commandes
+								 
+instr_commandes ::= associer
+									| programmer
+
+associer ::= associer_simple
+					 | associer_plusieurs
+					 
+associer_simple ::= ASSOCIER IDENTIFIANT EGAL IDENTIFIANT POINT
+
+associer_plusieurs ::= ASSOCIER IDENTIFIANT EGAL CROCHET_GAUCHE associations CROCHET_DROITE POINT
+
+associations ::= IDENTIFIANT
+					  		| IDENTIFIANT VIRGULE  associations
+										 
+programmer ::= PROGRAMMER IDENTIFIANT EGAL programmer_simple POINT 
+						 | PROGRAMMER IDENTIFIANT EGAL programmer_plusieurs POINT 
+						 
+programmer_simple ::= date_format;
+programmer_plusieurs ::= CROCHET_GAUCHE list_date_format CROCHET_DROITE;  
+
+date_format ::= PARENTHESE_GAUCHE valeur_date VIRGULE valeur_date VIRGULE valeur_date VIRGULE valeur_date VIRGULE valeur_date PARENTHESE_DROITE
+
+valeur_date ::= ENTIER
+							| UNDERSCORE
+
+list_date_format ::= date_format
+									 | date_format VIRGULE list_date_format;
+									 
+									 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
